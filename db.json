@@ -1,0 +1,31 @@
+{
+  "todos": [
+    {
+      "id": 1552465276509,
+      "text": "todo-01",
+      "done": true,
+      "status": {
+        "act": "pending",
+        "next": "done"
+      }
+    },
+    {
+      "id": 1552465284397,
+      "text": "todo-02",
+      "done": true,
+      "status": {
+        "act": "pending",
+        "next": "done"
+      }
+    },
+    {
+      "id": 1552465290181,
+      "text": "todo-03",
+      "done": false,
+      "status": {
+        "act": "pending",
+        "next": "done"
+      }
+    }
+  ]
+}
