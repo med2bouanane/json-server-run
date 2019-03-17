@@ -1,13 +1,22 @@
+const express = require('express')
 const fs = require('fs')
 const bodyParser = require('body-parser')
 const jsonServer = require('json-server')
 const jwt = require('jsonwebtoken')
+const cors = require('cors')
 
-const server = jsonServer.create()
+const multer  = require('multer')
+const upload = multer({ dest: 'uploads/' })
+
+const server = express()
+
+// const server = jsonServer.create()
 
 const router = jsonServer.router('./db.json')
 
 // server.use(jsonServer.defaults());
+// app.use(cors())
+server.use(cors())
 server.use(bodyParser.urlencoded({extended: true}))
 server.use(bodyParser.json())
 
@@ -31,9 +40,25 @@ function isAuthenticated({ email, password }) {
     return userdb.users.findIndex(user => user.email === email && user.password === password) !== -1
 }
 
+  server.post('/signup', (req, res) => {
+  console.log('req -------------->',JSON.stringify(req.body) )
+    const userReq = req.body
+    console.log('req -------------->',userReq )
+    if (userdb.users.findIndex(user => user.email === userReq.email) === -1) {
+    const access_token = createToken({email:userReq.email, password:userReq.password})
+    res.status(200).json({access_token})
+    userReq.id = Date.now()
+    userdb.users.push(userReq)
+      return
+    }
+      const status = 500
+      const message = 'This email already exists'
+      res.status(status).json({status, message})
+  })
+
+
 server.post('/auth/login', (req, res) => {
-  console.log('req -------------->',req + '\n')
-  console.log('req.body --------->',req.body+ '\n')
+  console.log('req -------------->',JSON.stringify(req.body) )
     const {email, password} = req.body
     if (isAuthenticated({email, password}) === false) {
       const status = 401
@@ -45,7 +70,13 @@ server.post('/auth/login', (req, res) => {
     res.status(200).json({access_token})
   })
 
-  server.use(/^(?!\/auth).*$/,  (req, res, next) => {
+server.post('/upload', upload.array('test', 12), function (req, res, next) {
+  // req.files is array of `files` files
+  // req.body will contain the text fields, if there were any
+  console.log('files -------------->')//,JSON.stringify(req.files) )
+})
+  server.use('/',  (req, res, next) => {
+    // server.use(/^(?!\/auth).*$/,  (req, res, next) => {
     if (req.headers.authorization === undefined || req.headers.authorization.split(' ')[0] !== 'Bearer') {
       const status = 401
       const message = 'Bad authorization header'
@@ -62,7 +93,13 @@ server.post('/auth/login', (req, res) => {
     }
   })
 
-  server.use(router)
+
+server.get('/users', (req, res) => {
+    console.log('req -------------->',userdb.users)
+    res.status(200).json(userdb.users)
+  })
+  // server.use(router)
+  server.use('/', jsonServer.defaults(), router);
 
 server.listen(3000, () => {
   console.log('Run Auth API Server')
